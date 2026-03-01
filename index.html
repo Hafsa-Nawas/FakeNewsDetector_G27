@@ -4,896 +4,548 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Hybrid BiGRU-Transformer | Fake News Detection — Group 27</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 :root {
-  --bg:       #060810;
-  --surface:  #0d1117;
-  --card:     #111827;
-  --border:   #1f2937;
-  --accent:   #00d4ff;
-  --accent2:  #0066ff;
-  --danger:   #ff3d5a;
-  --success:  #00e676;
-  --text:     #f0f4f8;
-  --muted:    #6b7280;
-  --display:  'Syne', sans-serif;
-  --body:     'DM Sans', sans-serif;
+  --bg:      #060810;
+  --surface: #0d1117;
+  --card:    #111827;
+  --border:  #1f2937;
+  --accent:  #00d4ff;
+  --accent2: #0066ff;
+  --success: #00e676;
+  --text:    #f0f4f8;
+  --muted:   #6b7280;
+  --font:    'Plus Jakarta Sans', sans-serif;
 }
-
 *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
-
-html { scroll-behavior: smooth; }
-
+html { scroll-behavior:smooth; }
 body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: var(--body);
-  font-size: 16px;
-  line-height: 1.7;
-  overflow-x: hidden;
+  background:var(--bg); color:var(--text);
+  font-family:var(--font); font-size:16px;
+  line-height:1.7; overflow-x:hidden;
 }
-
-/* ── NOISE TEXTURE ── */
 body::before {
-  content:'';
-  position:fixed; inset:0;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  content:''; position:fixed; inset:0;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
   pointer-events:none; z-index:0;
 }
-
-/* ── GRID LINES ── */
 body::after {
-  content:'';
-  position:fixed; inset:0;
+  content:''; position:fixed; inset:0;
   background-image:
-    linear-gradient(rgba(0,212,255,.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,212,255,.03) 1px, transparent 1px);
-  background-size: 60px 60px;
+    linear-gradient(rgba(0,212,255,.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(0,212,255,.03) 1px,transparent 1px);
+  background-size:60px 60px;
   pointer-events:none; z-index:0;
 }
 
 /* ── NAV ── */
 nav {
-  position: fixed; top:0; left:0; right:0; z-index:100;
-  display: flex; align-items:center; justify-content:space-between;
-  padding: 18px 48px;
-  background: rgba(6,8,16,.85);
-  backdrop-filter: blur(20px);
-  border-bottom: 1px solid rgba(0,212,255,.08);
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:16px 48px;
+  background:rgba(6,8,16,.95);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid rgba(0,212,255,.08);
 }
-
 .nav-logo {
-  display:flex; align-items:center; gap:12px;
-  font-family: var(--display);
-  font-weight: 800;
-  font-size: 17px;
-  letter-spacing: -.02em;
-  color: var(--text);
-  text-decoration:none;
+  display:flex; align-items:center; gap:10px;
+  font-weight:800; font-size:17px;
+  color:var(--text); text-decoration:none;
 }
-
 .nav-logo-icon {
-  width:36px; height:36px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  width:34px; height:34px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
   border-radius:8px;
   display:flex; align-items:center; justify-content:center;
-  font-size:18px;
+  font-size:17px;
 }
-
-.nav-links {
-  display:flex; gap:36px; list-style:none;
-}
-
+.nav-links { display:flex; gap:28px; list-style:none; align-items:center; }
 .nav-links a {
-  color: var(--muted);
-  text-decoration:none;
-  font-size:13px;
-  font-weight:500;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  transition: color .2s;
+  color:var(--muted); text-decoration:none;
+  font-size:12px; font-weight:600;
+  letter-spacing:.05em; text-transform:uppercase;
+  transition:color .2s;
 }
-.nav-links a:hover { color: var(--accent); }
-
+.nav-links a:hover { color:var(--accent); }
 .nav-cta {
-  padding: 9px 22px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #000 !important;
-  border-radius: 6px;
-  font-weight: 600 !important;
-  font-size: 12px !important;
+  padding:9px 20px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000 !important; border-radius:6px; font-weight:700 !important;
+}
+.hamburger {
+  display:none; flex-direction:column; gap:5px;
+  cursor:pointer; background:none; border:none; padding:6px;
+}
+.hamburger span {
+  display:block; width:24px; height:2px;
+  background:var(--text); border-radius:2px; transition:all .3s;
+}
+.hamburger.open span:nth-child(1) { transform:rotate(45deg) translate(5px,5px); }
+.hamburger.open span:nth-child(2) { opacity:0; }
+.hamburger.open span:nth-child(3) { transform:rotate(-45deg) translate(5px,-5px); }
+
+/* ── MOBILE MENU ── */
+.mobile-menu {
+  position:fixed; top:67px; left:0; right:0; z-index:199;
+  background:rgba(6,8,16,.98); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:16px 20px 20px; flex-direction:column; gap:2px; display:none;
+}
+.mobile-menu.open { display:flex; }
+.mobile-menu a {
+  color:var(--muted); text-decoration:none;
+  font-size:14px; font-weight:600;
+  letter-spacing:.04em; text-transform:uppercase;
+  padding:12px 16px; border-radius:8px; transition:background .2s, color .2s;
+}
+.mobile-menu a:hover { color:var(--accent); background:rgba(0,212,255,.06); }
+.mobile-menu .mob-cta {
+  margin-top:10px; text-align:center;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000 !important; border-radius:8px; font-weight:700 !important;
+}
+
+/* ── TICKER ── */
+.ticker-wrap {
+  position:relative; z-index:1;
+  background:rgba(0,212,255,.04);
+  border-top:1px solid rgba(0,212,255,.08);
+  border-bottom:1px solid rgba(0,212,255,.08);
+  padding:10px 0; overflow:hidden;
+  margin-top:67px;
+}
+.ticker {
+  display:flex; gap:0;
+  animation:ticker 30s linear infinite;
+  width:max-content;
+}
+.ticker-item {
+  white-space:nowrap; padding:0 40px;
+  font-size:12px; font-weight:600;
+  color:var(--accent); letter-spacing:.06em; text-transform:uppercase;
+}
+.ticker-item span { color:var(--muted); margin-right:8px; }
+@keyframes ticker {
+  from { transform:translateX(0); }
+  to   { transform:translateX(-50%); }
 }
 
 /* ── HERO ── */
 .hero {
   position:relative; z-index:1;
-  min-height: 100vh;
+  min-height:calc(100vh - 107px);
   display:flex; flex-direction:column;
   align-items:center; justify-content:center;
-  text-align:center;
-  padding: 120px 24px 80px;
-  overflow:hidden;
+  text-align:center; padding:80px 24px;
+  max-width:100% !important; margin-top:0;
 }
-
 .hero-glow {
-  position:absolute;
-  width: 700px; height:700px;
-  border-radius:50%;
-  background: radial-gradient(circle, rgba(0,212,255,.08) 0%, transparent 70%);
-  top:50%; left:50%;
-  transform: translate(-50%,-50%);
-  pointer-events:none;
+  position:absolute; width:800px; height:800px; border-radius:50%;
+  background:radial-gradient(circle,rgba(0,212,255,.06) 0%,transparent 70%);
+  top:50%; left:50%; transform:translate(-50%,-50%); pointer-events:none;
 }
-
 .hero-badge {
-  display:inline-flex; align-items:center; gap:8px;
-  padding: 6px 16px;
-  background: rgba(0,212,255,.08);
-  border: 1px solid rgba(0,212,255,.2);
-  border-radius: 20px;
-  font-size:12px;
-  font-family: 'DM Sans', monospace;
-  color: var(--accent);
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  margin-bottom: 28px;
-  animation: fadeUp .6s ease both;
+  display:inline-flex; align-items:center; gap:8px; padding:6px 16px;
+  background:rgba(0,212,255,.08); border:1px solid rgba(0,212,255,.2);
+  border-radius:20px; font-size:11px; color:var(--accent);
+  letter-spacing:.07em; text-transform:uppercase; margin-bottom:28px;
+  animation:fadeUp .6s ease both;
 }
-
 .hero h1 {
-  font-family: var(--display);
-  font-size: clamp(36px, 6vw, 76px);
-  font-weight: 800;
-  letter-spacing: -.03em;
-  line-height: 1.08;
-  margin-bottom: 24px;
-  animation: fadeUp .7s ease .1s both;
+  font-size:clamp(30px,5vw,56px); font-weight:800;
+  letter-spacing:-.02em; line-height:1.1; margin-bottom:20px;
+  animation:fadeUp .7s ease .1s both;
 }
-
-.hero h1 .accent { color: var(--accent); }
+.hero h1 .accent { color:var(--accent); }
 .hero h1 .block { display:block; }
-
 .hero-sub {
-  max-width: 580px;
-  font-size: 17px;
-  color: var(--muted);
-  font-weight: 300;
-  line-height: 1.7;
-  margin-bottom: 40px;
-  animation: fadeUp .7s ease .2s both;
+  max-width:600px; font-size:16px; color:var(--muted);
+  font-weight:400; line-height:1.75; margin-bottom:36px;
+  animation:fadeUp .7s ease .2s both;
 }
-
 .hero-btns {
-  display:flex; gap:14px; flex-wrap:wrap;
-  justify-content:center;
-  animation: fadeUp .7s ease .3s both;
+  display:flex; gap:14px; flex-wrap:wrap; justify-content:center;
+  animation:fadeUp .7s ease .3s both;
 }
-
 .btn-primary {
-  padding: 14px 32px;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: #000;
-  font-family: var(--display);
-  font-weight: 700;
-  font-size: 14px;
-  letter-spacing:.02em;
-  border-radius: 8px;
-  text-decoration:none;
-  transition: opacity .2s, transform .15s;
+  padding:13px 30px;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  color:#000; font-weight:700; font-size:14px;
+  border-radius:8px; text-decoration:none;
+  transition:opacity .2s, transform .15s;
 }
 .btn-primary:hover { opacity:.88; transform:translateY(-2px); }
-
 .btn-outline {
-  padding: 14px 32px;
-  border: 1px solid var(--border);
-  color: var(--text);
-  font-family: var(--display);
-  font-weight: 600;
-  font-size: 14px;
-  letter-spacing:.02em;
-  border-radius: 8px;
-  text-decoration:none;
-  transition: border-color .2s, transform .15s;
+  padding:13px 30px; border:1px solid var(--border); color:var(--text);
+  font-weight:600; font-size:14px; border-radius:8px; text-decoration:none;
+  transition:border-color .2s, transform .15s;
 }
-.btn-outline:hover { border-color: var(--accent); transform:translateY(-2px); }
+.btn-outline:hover { border-color:var(--accent); transform:translateY(-2px); }
 
-/* Floating stats */
 .hero-stats {
-  display:flex; gap:48px;
-  margin-top: 72px;
-  padding-top: 40px;
-  border-top: 1px solid var(--border);
-  animation: fadeUp .7s ease .4s both;
+  display:flex; gap:48px; flex-wrap:wrap; justify-content:center;
+  margin-top:60px; padding-top:36px; border-top:1px solid var(--border);
+  animation:fadeUp .7s ease .4s both;
 }
 .stat { text-align:center; }
-.stat-val {
-  font-family: var(--display);
-  font-size: 32px;
-  font-weight: 800;
-  color: var(--accent);
-  letter-spacing:-.02em;
-}
-.stat-label {
-  font-size: 11px;
-  color: var(--muted);
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  margin-top: 2px;
-}
+.stat-val { font-size:30px; font-weight:800; color:var(--accent); letter-spacing:-.02em; }
+.stat-label { font-size:10px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-top:2px; }
 
-/* ── SECTION BASE ── */
+/* ── SHARED SECTION ── */
 section {
   position:relative; z-index:1;
-  padding: 100px 48px;
-  max-width: 1140px;
-  margin: 0 auto;
+  padding:90px 48px; max-width:1140px; margin:0 auto;
 }
+.section-tag { font-size:11px; color:var(--accent); letter-spacing:.12em; text-transform:uppercase; margin-bottom:12px; display:block; }
+.section-title { font-size:clamp(26px,4vw,40px); font-weight:800; letter-spacing:-.02em; line-height:1.15; margin-bottom:14px; }
+.section-sub { font-size:15px; color:var(--muted); max-width:500px; line-height:1.75; font-weight:400; margin-bottom:48px; }
+.divider { height:1px; background:linear-gradient(90deg,transparent,var(--border),transparent); margin:0 48px; position:relative; z-index:1; }
 
-.section-tag {
-  font-size: 11px;
-  font-family: 'DM Sans', monospace;
-  color: var(--accent);
-  letter-spacing:.12em;
-  text-transform:uppercase;
-  margin-bottom: 14px;
-  display:block;
+/* ── WHY (ABOUT) ── */
+.why-grid { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:start; }
+.why-text p { color:var(--muted); line-height:1.8; margin-bottom:16px; font-size:15px; }
+.why-text p strong { color:var(--text); font-weight:600; }
+.why-highlight {
+  background:rgba(0,212,255,.05); border:1px solid rgba(0,212,255,.15);
+  border-radius:12px; padding:20px 24px; margin-top:20px;
 }
+.why-highlight p { color:var(--text); font-size:14px; font-weight:500; margin:0; line-height:1.6; }
+.why-highlight p em { color:var(--accent); font-style:normal; }
 
-.section-title {
-  font-family: var(--display);
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: 800;
-  letter-spacing:-.02em;
-  line-height:1.15;
-  margin-bottom: 16px;
+.features-list { display:flex; flex-direction:column; gap:14px; }
+.feature-item {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:20px 22px;
+  display:flex; align-items:flex-start; gap:16px;
+  transition:border-color .2s, transform .2s;
 }
+.feature-item:hover { border-color:rgba(0,212,255,.3); transform:translateX(4px); }
+.feature-icon {
+  width:42px; height:42px; border-radius:10px; flex-shrink:0;
+  background:rgba(0,212,255,.1); border:1px solid rgba(0,212,255,.15);
+  display:flex; align-items:center; justify-content:center; font-size:19px;
+}
+.feature-info h4 { font-size:14px; font-weight:700; margin-bottom:4px; }
+.feature-info p { font-size:12px; color:var(--muted); line-height:1.5; }
 
-.section-sub {
-  font-size: 16px;
-  color: var(--muted);
-  max-width: 520px;
-  line-height: 1.7;
-  font-weight:300;
-  margin-bottom: 56px;
+/* ── RESEARCH HIGHLIGHTS ── */
+.highlights-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
+.highlight-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:14px; padding:26px 22px;
+  transition:border-color .2s, transform .2s;
 }
-
-/* ── DIVIDER ── */
-.divider {
-  height: 1px;
-  background: linear-gradient(90deg, transparent, var(--border), transparent);
-  margin: 0 48px;
-  position:relative; z-index:1;
-}
-
-/* ── ABOUT ── */
-.about-grid {
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:48px;
-  align-items:center;
-}
-
-.about-text p {
-  color: var(--muted);
-  font-weight:300;
-  line-height:1.8;
-  margin-bottom: 16px;
-}
-
-.about-text p strong {
-  color: var(--text);
-  font-weight:500;
-}
-
-.about-cards {
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:14px;
-}
-
-.about-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding: 20px;
-  transition: border-color .2s, transform .2s;
-}
-.about-card:hover {
-  border-color: rgba(0,212,255,.3);
-  transform: translateY(-3px);
-}
-.about-card .card-icon { font-size:24px; margin-bottom:10px; }
-.about-card h4 {
-  font-family: var(--display);
-  font-size: 14px;
-  font-weight:700;
-  margin-bottom:6px;
-}
-.about-card p {
-  font-size:12px;
-  color: var(--muted);
-  line-height:1.5;
-}
+.highlight-card:hover { border-color:rgba(0,212,255,.3); transform:translateY(-4px); }
+.highlight-card .h-icon { font-size:28px; margin-bottom:14px; }
+.highlight-card h4 { font-size:15px; font-weight:700; margin-bottom:8px; }
+.highlight-card p { font-size:13px; color:var(--muted); line-height:1.6; }
 
 /* ── METHODOLOGY ── */
 .method-full {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  padding: 40px;
-  margin-bottom: 32px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:16px; padding:36px; margin-bottom:28px;
 }
-
-.method-steps {
-  display:grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-top: 32px;
-}
-
+.method-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-top:28px; }
 .step-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:24px;
-  position:relative;
-  transition: border-color .2s;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:22px; transition:border-color .2s;
 }
-.step-card:hover { border-color: rgba(0,212,255,.3); }
+.step-card:hover { border-color:rgba(0,212,255,.3); }
+.step-num { font-size:44px; font-weight:800; color:rgba(0,212,255,.1); line-height:1; margin-bottom:10px; }
+.step-card h4 { font-size:14px; font-weight:700; margin-bottom:7px; color:var(--accent); }
+.step-card p { font-size:13px; color:var(--muted); line-height:1.6; }
 
-.step-num {
-  font-family: var(--display);
-  font-size: 48px;
-  font-weight:800;
-  color: rgba(0,212,255,.1);
-  line-height:1;
-  margin-bottom:12px;
-}
-.step-card h4 {
-  font-family: var(--display);
-  font-size:15px;
-  font-weight:700;
-  margin-bottom:8px;
-  color: var(--accent);
-}
-.step-card p {
-  font-size:13px;
-  color: var(--muted);
-  line-height:1.6;
-}
-
-/* Architecture flow */
 .arch-flow {
-  display:flex;
-  align-items:center;
-  gap:0;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:24px 32px;
-  overflow-x:auto;
-  margin-top:32px;
+  display:flex; align-items:center;
+  background:var(--surface); border:1px solid var(--border);
+  border-radius:12px; padding:20px 28px; overflow-x:auto; margin-top:28px;
 }
-
 .arch-node {
-  display:flex; flex-direction:column;
-  align-items:center; text-align:center;
-  min-width:110px;
-  padding: 16px 12px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius:10px;
-  transition: border-color .2s;
+  display:flex; flex-direction:column; align-items:center; text-align:center;
+  min-width:100px; padding:14px 10px; flex-shrink:0;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:10px; transition:border-color .2s;
 }
-.arch-node:hover { border-color: var(--accent); }
-.arch-node .node-icon { font-size:24px; margin-bottom:8px; }
-.arch-node h5 {
-  font-family: var(--display);
-  font-size:11px;
-  font-weight:700;
-  color: var(--accent);
-  letter-spacing:.04em;
-  text-transform:uppercase;
-}
-.arch-node p { font-size:10px; color: var(--muted); margin-top:4px; line-height:1.4; }
-
-.arch-arrow {
-  flex-shrink:0;
-  width:40px; height:2px;
-  background: linear-gradient(90deg, var(--border), var(--accent));
-  position:relative;
-  margin: 0 4px;
-}
-.arch-arrow::after {
-  content:'';
-  position:absolute; right:-1px; top:-4px;
-  border:5px solid transparent;
-  border-left-color: var(--accent);
-}
+.arch-node:hover { border-color:var(--accent); }
+.arch-node .node-icon { font-size:22px; margin-bottom:7px; }
+.arch-node h5 { font-size:10px; font-weight:700; color:var(--accent); letter-spacing:.04em; text-transform:uppercase; }
+.arch-node p { font-size:9px; color:var(--muted); margin-top:3px; line-height:1.4; }
+.arch-arrow { flex-shrink:0; width:36px; height:2px; background:linear-gradient(90deg,var(--border),var(--accent)); position:relative; margin:0 4px; }
+.arch-arrow::after { content:''; position:absolute; right:-1px; top:-4px; border:5px solid transparent; border-left-color:var(--accent); }
 
 /* ── RESULTS ── */
-.results-grid {
-  display:grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap:16px;
-  margin-bottom:40px;
-}
-
+.results-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:36px; }
 .metric-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:24px 20px;
-  text-align:center;
-  transition: border-color .2s, transform .2s;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:22px 18px; text-align:center;
+  transition:border-color .2s, transform .2s;
 }
-.metric-card:hover {
-  border-color: rgba(0,212,255,.3);
-  transform:translateY(-3px);
-}
-.metric-card .m-icon { font-size:22px; margin-bottom:10px; }
-.metric-card .m-val {
-  font-family: var(--display);
-  font-size:28px;
-  font-weight:800;
-  color: var(--accent);
-  letter-spacing:-.02em;
-}
-.metric-card .m-label {
-  font-size:11px;
-  color: var(--muted);
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  margin-top:4px;
-}
+.metric-card:hover { border-color:rgba(0,212,255,.3); transform:translateY(-3px); }
+.metric-card .m-icon { font-size:20px; margin-bottom:8px; }
+.metric-card .m-val { font-size:26px; font-weight:800; color:var(--accent); letter-spacing:-.02em; }
+.metric-card .m-label { font-size:10px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase; margin-top:4px; }
 
-.comparison-table {
-  width:100%;
-  border-collapse:collapse;
-  background: var(--card);
-  border-radius:12px;
-  overflow:hidden;
-  border: 1px solid var(--border);
-}
-.comparison-table th {
-  background: var(--surface);
-  padding: 14px 20px;
-  text-align:left;
-  font-family: var(--display);
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color: var(--muted);
-  border-bottom: 1px solid var(--border);
-}
-.comparison-table td {
-  padding: 14px 20px;
-  font-size:14px;
-  color: var(--muted);
-  border-bottom: 1px solid rgba(31,41,55,.5);
-}
+.comparison-table { width:100%; border-collapse:collapse; background:var(--card); border-radius:12px; overflow:hidden; border:1px solid var(--border); }
+.comparison-table th { background:var(--surface); padding:13px 18px; text-align:left; font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); border-bottom:1px solid var(--border); }
+.comparison-table td { padding:13px 18px; font-size:13px; color:var(--muted); border-bottom:1px solid rgba(31,41,55,.5); }
 .comparison-table tr:last-child td { border-bottom:none; }
-.comparison-table tr.highlight td {
-  color: var(--text);
-  background: rgba(0,212,255,.04);
-}
-.comparison-table tr.highlight td:first-child {
-  color: var(--accent);
-  font-weight:600;
-}
-.badge-best {
-  display:inline-block;
-  padding:2px 8px;
-  background: rgba(0,230,118,.12);
-  border: 1px solid rgba(0,230,118,.25);
-  border-radius:20px;
-  font-size:10px;
-  color: var(--success);
-  margin-left:6px;
-}
+.comparison-table tr.highlight td { color:var(--text); background:rgba(0,212,255,.04); }
+.comparison-table tr.highlight td:first-child { color:var(--accent); font-weight:600; }
+.badge-best { display:inline-block; padding:2px 8px; background:rgba(0,230,118,.12); border:1px solid rgba(0,230,118,.25); border-radius:20px; font-size:10px; color:var(--success); margin-left:6px; }
 
 /* ── DATASET ── */
-.dataset-grid {
-  display:grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:20px;
-}
-
-.dataset-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:24px;
-  transition: border-color .2s, transform .2s;
-}
-.dataset-card:hover {
-  border-color: rgba(0,212,255,.3);
-  transform:translateY(-3px);
-}
-.dataset-card .ds-icon { font-size:28px; margin-bottom:12px; }
-.dataset-card h4 {
-  font-family: var(--display);
-  font-size:15px;
-  font-weight:700;
-  margin-bottom:6px;
-}
-.dataset-card .ds-count {
-  font-family: var(--display);
-  font-size:24px;
-  font-weight:800;
-  color: var(--accent);
-  margin-bottom:6px;
-}
-.dataset-card p { font-size:12px; color: var(--muted); line-height:1.5; }
+.dataset-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+.dataset-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:22px; transition:border-color .2s, transform .2s; }
+.dataset-card:hover { border-color:rgba(0,212,255,.3); transform:translateY(-3px); }
+.dataset-card .ds-icon { font-size:26px; margin-bottom:10px; }
+.dataset-card h4 { font-size:14px; font-weight:700; margin-bottom:5px; }
+.dataset-card .ds-count { font-size:22px; font-weight:800; color:var(--accent); margin-bottom:5px; }
+.dataset-card p { font-size:12px; color:var(--muted); line-height:1.5; }
 
 /* ── HOW TO USE ── */
-.howto-steps {
-  display:grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:24px;
-}
+.howto-steps { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; }
+.howto-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:26px 22px; position:relative; overflow:hidden; transition:border-color .2s; }
+.howto-card::before { content:attr(data-step); position:absolute; top:-10px; right:14px; font-size:72px; font-weight:800; color:rgba(0,212,255,.05); line-height:1; pointer-events:none; }
+.howto-card:hover { border-color:rgba(0,212,255,.3); }
+.howto-card .step-icon { font-size:28px; margin-bottom:14px; }
+.howto-card h4 { font-size:15px; font-weight:700; margin-bottom:8px; }
+.howto-card p { font-size:13px; color:var(--muted); line-height:1.6; }
 
-.howto-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:28px 24px;
-  position:relative;
-  overflow:hidden;
-  transition: border-color .2s;
+/* ── TECH STACK ── */
+.tech-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:16px; }
+.tech-card {
+  background:var(--card); border:1px solid var(--border);
+  border-radius:12px; padding:20px 16px; text-align:center;
+  transition:border-color .2s, transform .2s;
 }
-.howto-card::before {
-  content: attr(data-step);
-  position:absolute; top:-10px; right:16px;
-  font-family: var(--display);
-  font-size:80px;
-  font-weight:800;
-  color:rgba(0,212,255,.05);
-  line-height:1;
-  pointer-events:none;
-}
-.howto-card:hover { border-color: rgba(0,212,255,.3); }
-.howto-card .step-icon { font-size:32px; margin-bottom:16px; }
-.howto-card h4 {
-  font-family: var(--display);
-  font-size:16px;
-  font-weight:700;
-  margin-bottom:10px;
-}
-.howto-card p { font-size:13px; color: var(--muted); line-height:1.6; }
+.tech-card:hover { border-color:rgba(0,212,255,.3); transform:translateY(-3px); }
+.tech-card .tech-icon { font-size:28px; margin-bottom:10px; }
+.tech-card h5 { font-size:13px; font-weight:700; margin-bottom:3px; }
+.tech-card span { font-size:10px; color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
 
 /* ── TEAM ── */
-.team-grid {
-  display:grid;
-  grid-template-columns: repeat(3,1fr);
-  gap:24px;
-  margin-bottom:48px;
-}
+.team-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:20px; margin-bottom:40px; }
+.team-card { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:26px 22px; text-align:center; transition:border-color .2s, transform .2s; }
+.team-card:hover { border-color:rgba(0,212,255,.3); transform:translateY(-4px); }
+.team-avatar { width:64px; height:64px; border-radius:50%; background:linear-gradient(135deg,var(--accent),var(--accent2)); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; color:#000; margin:0 auto 14px; }
+.team-card h4 { font-size:15px; font-weight:700; margin-bottom:4px; }
+.team-card .team-id { font-size:11px; color:var(--accent); letter-spacing:.05em; margin-bottom:4px; }
+.team-card .team-role { font-size:12px; color:var(--muted); margin-bottom:6px; }
+.team-card .team-email { font-size:11px; color:var(--muted); text-decoration:none; transition:color .2s; }
+.team-card .team-email:hover { color:var(--accent); }
 
-.team-card {
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:28px 24px;
-  text-align:center;
-  transition: border-color .2s, transform .2s;
-}
-.team-card:hover {
-  border-color: rgba(0,212,255,.3);
-  transform:translateY(-4px);
-}
-.team-avatar {
-  width:64px; height:64px;
-  border-radius:50%;
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  display:flex; align-items:center; justify-content:center;
-  font-family: var(--display);
-  font-size:22px;
-  font-weight:800;
-  color:#000;
-  margin: 0 auto 16px;
-}
-.team-card h4 {
-  font-family: var(--display);
-  font-size:15px;
-  font-weight:700;
-  margin-bottom:4px;
-}
-.team-card .team-id {
-  font-size:11px;
-  color: var(--accent);
-  letter-spacing:.06em;
-  margin-bottom:6px;
-}
-.team-card .team-role {
-  font-size:12px;
-  color: var(--muted);
-}
-
-.supervisors {
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:20px;
-}
-
-.supervisor-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius:12px;
-  padding:20px 24px;
-  display:flex;
-  align-items:center;
-  gap:16px;
-}
-.sup-avatar {
-  width:48px; height:48px;
-  border-radius:50%;
-  background: rgba(0,212,255,.1);
-  border: 1px solid rgba(0,212,255,.2);
-  display:flex; align-items:center; justify-content:center;
-  font-size:20px;
-  flex-shrink:0;
-}
-.sup-info h5 {
-  font-family: var(--display);
-  font-size:14px;
-  font-weight:700;
-  margin-bottom:2px;
-}
-.sup-info .sup-role {
-  font-size:11px;
-  color: var(--accent);
-  letter-spacing:.04em;
-  margin-bottom:2px;
-}
-.sup-info .sup-email {
-  font-size:11px;
-  color: var(--muted);
-}
+.supervisors { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.supervisor-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px 22px; display:flex; align-items:center; gap:14px; }
+.sup-avatar { width:48px; height:48px; border-radius:50%; background:rgba(0,212,255,.1); border:1px solid rgba(0,212,255,.2); display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+.sup-info h5 { font-size:13px; font-weight:700; margin-bottom:2px; }
+.sup-info .sup-role { font-size:11px; color:var(--accent); margin-bottom:2px; }
+.sup-info .sup-email { font-size:11px; color:var(--muted); }
 
 /* ── DEMO CTA ── */
 .demo-section {
-  background: linear-gradient(135deg,
-    rgba(0,212,255,.06) 0%,
-    rgba(0,102,255,.06) 100%);
-  border: 1px solid rgba(0,212,255,.15);
-  border-radius: 20px;
-  padding: 64px 48px;
-  text-align:center;
-  position:relative;
-  overflow:hidden;
+  background:linear-gradient(135deg,rgba(0,212,255,.06),rgba(0,102,255,.06));
+  border:1px solid rgba(0,212,255,.15); border-radius:20px;
+  padding:60px 48px; text-align:center; position:relative; overflow:hidden;
 }
-.demo-section::before {
-  content:'';
-  position:absolute; inset:0;
-  background: radial-gradient(circle at 50% 0%, rgba(0,212,255,.08), transparent 60%);
-}
-.demo-section h2 {
-  font-family: var(--display);
-  font-size: clamp(24px, 4vw, 40px);
-  font-weight:800;
-  letter-spacing:-.02em;
-  margin-bottom:14px;
-  position:relative;
-}
-.demo-section p {
-  color: var(--muted);
-  font-size:16px;
-  margin-bottom:32px;
-  position:relative;
-  font-weight:300;
-}
+.demo-section::before { content:''; position:absolute; inset:0; background:radial-gradient(circle at 50% 0%,rgba(0,212,255,.07),transparent 60%); }
+.demo-section h2 { font-size:clamp(22px,4vw,36px); font-weight:800; letter-spacing:-.02em; margin-bottom:12px; position:relative; }
+.demo-section p { color:var(--muted); font-size:15px; margin-bottom:28px; position:relative; }
 
 /* ── FOOTER ── */
-footer {
-  position:relative; z-index:1;
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  padding: 48px;
-}
-
-.footer-inner {
-  max-width:1140px;
-  margin:0 auto;
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr;
-  gap:40px;
-}
-
-.footer-brand h3 {
-  font-family: var(--display);
-  font-size:18px;
-  font-weight:800;
-  letter-spacing:-.02em;
-  margin-bottom:10px;
-}
-.footer-brand p {
-  font-size:13px;
-  color: var(--muted);
-  line-height:1.6;
-}
-
-.footer-col h5 {
-  font-family: var(--display);
-  font-size:12px;
-  font-weight:700;
-  letter-spacing:.08em;
-  text-transform:uppercase;
-  color: var(--muted);
-  margin-bottom:16px;
-}
-.footer-col a {
-  display:block;
-  font-size:13px;
-  color: var(--muted);
-  text-decoration:none;
-  margin-bottom:8px;
-  transition:color .2s;
-}
-.footer-col a:hover { color: var(--accent); }
-
-.footer-bottom {
-  max-width:1140px;
-  margin: 32px auto 0;
-  padding-top:24px;
-  border-top: 1px solid var(--border);
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-size:12px;
-  color: var(--muted);
-}
-
-.usjp-badge {
-  display:inline-flex;
-  align-items:center;
-  gap:8px;
-  padding:6px 14px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid var(--border);
-  border-radius:20px;
-  font-size:11px;
-  color: var(--muted);
-}
+footer { position:relative; z-index:1; background:var(--surface); border-top:1px solid var(--border); padding:48px; }
+.footer-inner { max-width:1140px; margin:0 auto; display:grid; grid-template-columns:1.4fr 1fr 1fr; gap:40px; }
+.footer-brand h3 { font-size:17px; font-weight:800; letter-spacing:-.02em; margin-bottom:10px; }
+.footer-brand p { font-size:13px; color:var(--muted); line-height:1.6; margin-top:8px; }
+.usjp-badge { display:inline-flex; align-items:center; gap:8px; padding:6px 14px; margin-top:16px; background:rgba(255,255,255,.04); border:1px solid var(--border); border-radius:20px; font-size:11px; color:var(--muted); }
+.footer-col h5 { font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+.footer-col a { display:block; font-size:13px; color:var(--muted); text-decoration:none; margin-bottom:8px; transition:color .2s; }
+.footer-col a:hover { color:var(--accent); }
+.footer-bottom { max-width:1140px; margin:28px auto 0; padding-top:22px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); }
 
 /* ── ANIMATIONS ── */
-@keyframes fadeUp {
-  from { opacity:0; transform:translateY(24px); }
-  to   { opacity:1; transform:translateY(0); }
-}
-
-.reveal {
-  opacity:0;
-  transform:translateY(30px);
-  transition: opacity .6s ease, transform .6s ease;
-}
-.reveal.visible {
-  opacity:1;
-  transform:translateY(0);
-}
+@keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:translateY(0); } }
+.reveal { opacity:0; transform:translateY(28px); transition:opacity .6s ease, transform .6s ease; }
+.reveal.visible { opacity:1; transform:translateY(0); }
 
 /* ── RESPONSIVE ── */
+@media(max-width:900px) { .nav-links { display:none; } .hamburger { display:flex; } nav { padding:16px 20px; } }
 @media(max-width:768px) {
-  nav { padding:14px 20px; }
-  .nav-links { display:none; }
   section { padding:60px 20px; }
-  .about-grid,
-  .method-steps,
-  .results-grid,
-  .dataset-grid,
-  .howto-steps,
-  .team-grid,
-  .supervisors { grid-template-columns:1fr; }
-  .hero-stats { gap:24px; flex-wrap:wrap; justify-content:center; }
-  .footer-inner { grid-template-columns:1fr; }
-  .footer-bottom { flex-direction:column; gap:12px; }
+  .divider { margin:0 20px; }
+  .why-grid, .method-steps, .results-grid, .dataset-grid,
+  .howto-steps, .highlights-grid, .tech-grid,
+  .team-grid, .supervisors, .footer-inner { grid-template-columns:1fr; }
+  .hero-stats { gap:24px; }
+  .footer-bottom { flex-direction:column; gap:10px; text-align:center; }
+  .demo-section { padding:40px 24px; }
+  footer { padding:40px 20px; }
+  .ticker-wrap { margin-top:67px; }
 }
 </style>
 </head>
 <body>
 
 <!-- NAV -->
-<nav>
-  <a href="#" class="nav-logo">
+<nav id="mainNav">
+  <a href="#home" class="nav-logo">
     <div class="nav-logo-icon">🧠</div>
     FakeNews<span style="color:var(--accent)">Detector</span>
   </a>
   <ul class="nav-links">
     <li><a href="#about">About</a></li>
+    <li><a href="#research">Research</a></li>
     <li><a href="#methodology">Methodology</a></li>
     <li><a href="#results">Results</a></li>
-    <li><a href="#dataset">Dataset</a></li>
     <li><a href="#team">Team</a></li>
     <li><a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank" class="nav-cta">Try Demo →</a></li>
   </ul>
+  <button class="hamburger" id="hamburger" aria-label="Toggle menu">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
 
-<!-- HERO -->
-<section class="hero" style="max-width:100%;padding-top:140px;">
-  <div class="hero-glow"></div>
-  <div class="hero-badge">
-    🎓 University of Sri Jayewardenepura · Group 27 · ICT
+<!-- MOBILE MENU -->
+<div class="mobile-menu" id="mobileMenu">
+  <a href="#about"       onclick="closeMobile()">About</a>
+  <a href="#research"    onclick="closeMobile()">Research</a>
+  <a href="#methodology" onclick="closeMobile()">Methodology</a>
+  <a href="#results"     onclick="closeMobile()">Results</a>
+  <a href="#dataset"     onclick="closeMobile()">Dataset</a>
+  <a href="#howto"       onclick="closeMobile()">How to Use</a>
+  <a href="#team"        onclick="closeMobile()">Team</a>
+  <a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank" class="mob-cta" onclick="closeMobile()">🚀 Try Demo</a>
+</div>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker">
+    <div class="ticker-item"><span>·</span> Multimodal Fake News Detection</div>
+    <div class="ticker-item"><span>·</span> BiGRU + Transformer Architecture</div>
+    <div class="ticker-item"><span>·</span> Social Media Reactions</div>
+    <div class="ticker-item"><span>·</span> EasyOCR Image Text Extraction</div>
+    <div class="ticker-item"><span>·</span> VADER Sentiment Analysis</div>
+    <div class="ticker-item"><span>·</span> TF-IDF Vectorization</div>
+    <div class="ticker-item"><span>·</span> K-Fold Cross Validation</div>
+    <div class="ticker-item"><span>·</span> University of Sri Jayewardenepura</div>
+    <div class="ticker-item"><span>·</span> Multimodal Fake News Detection</div>
+    <div class="ticker-item"><span>·</span> BiGRU + Transformer Architecture</div>
+    <div class="ticker-item"><span>·</span> Social Media Reactions</div>
+    <div class="ticker-item"><span>·</span> EasyOCR Image Text Extraction</div>
+    <div class="ticker-item"><span>·</span> VADER Sentiment Analysis</div>
+    <div class="ticker-item"><span>·</span> TF-IDF Vectorization</div>
+    <div class="ticker-item"><span>·</span> K-Fold Cross Validation</div>
+    <div class="ticker-item"><span>·</span> University of Sri Jayewardenepura</div>
   </div>
+</div>
+
+<!-- HERO -->
+<section class="hero" id="home">
+  <div class="hero-glow"></div>
+  <div class="hero-badge">🎓 University of Sri Jayewardenepura · Research Project - Group 27 · </div>
   <h1>
     <span class="block">Hybrid BiGRU-Transformer</span>
     <span class="block">for <span class="accent">Fake News</span> Detection</span>
   </h1>
   <p class="hero-sub">
-    A multimodal AI system combining news text, image-extracted text via EasyOCR,
-    and social media reactions to detect misinformation with high accuracy.
+    A multimodal AI research system that integrates three key features —
+    <strong style="color:var(--text)">news article text</strong>,
+    <strong style="color:var(--text)">image-extracted text</strong>, and
+    <strong style="color:var(--text)">social media reactions</strong> —
+    to study and detect misinformation on social platforms.
   </p>
   <div class="hero-btns">
     <a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank" class="btn-primary">🚀 Try Live Demo</a>
-    <a href="#methodology" class="btn-outline">View Research →</a>
+    <a href="#about" class="btn-outline">View Research →</a>
   </div>
   <div class="hero-stats">
-    <div class="stat">
-      <div class="stat-val">>97%</div>
-      <div class="stat-label">Accuracy</div>
+    <div class="stat"><div class="stat-val">3</div><div class="stat-label">Integrated Features</div></div>
+    <div class="stat"><div class="stat-val">5-Fold</div><div class="stat-label">K-Fold Validation</div></div>
+    <div class="stat"><div class="stat-val">44K+</div><div class="stat-label">Training Samples</div></div>
+    <div class="stat"><div class="stat-val">Tri-Modal</div><div class="stat-label">Architecture</div></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- ABOUT / WHY -->
+<section id="about">
+  <span class="section-tag reveal">Overview</span>
+  <div class="why-grid">
+    <div class="why-text reveal">
+      <h2 class="section-title">What is this research about?</h2>
+      <p>
+        The rapid spread of misinformation on social media platforms poses significant challenges
+        to public trust and decision-making. Most existing approaches rely solely on text-based
+        analysis and fail to capture the full picture of how fake news spreads online.
+      </p>
+      <p>
+        This research focuses on <strong>integrating three key features</strong> into a unified
+        detection framework — news article text, image-extracted text via OCR, and social media
+        reaction signals — to build a more comprehensive understanding of misinformation.
+      </p>
+      <div class="why-highlight">
+        <p>
+          <em>Core Goal:</em> This work explores how integrating text content, visual text from images,
+          and user engagement patterns can work together to study fake news behaviour on social media platforms.
+        </p>
+      </div>
     </div>
-    <div class="stat">
-      <div class="stat-val">3</div>
-      <div class="stat-label">Modalities</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val">5-Fold</div>
-      <div class="stat-label">K-Fold Validation</div>
-    </div>
-    <div class="stat">
-      <div class="stat-val">44K+</div>
-      <div class="stat-label">Training Rows</div>
+    <div class="features-list reveal">
+      <div class="feature-item">
+        <div class="feature-icon">📰</div>
+        <div class="feature-info">
+          <h4>Feature 1 — News Article Text</h4>
+          <p>News title and body content processed using TF-IDF vectorization to capture textual patterns in real and fake news.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">🖼️</div>
+        <div class="feature-info">
+          <h4>Feature 2 — Image-Extracted Text</h4>
+          <p>EasyOCR extracts text embedded in social media post images, adding a visual modality to the detection pipeline.</p>
+        </div>
+      </div>
+      <div class="feature-item">
+        <div class="feature-icon">📊</div>
+        <div class="feature-info">
+          <h4>Feature 3 — Social Media Reactions</h4>
+          <p>Likes, shares, and positive/negative sentiment ratios capture user engagement patterns as behavioral signals.</p>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <div class="divider"></div>
 
-<!-- ABOUT -->
-<section id="about">
-  <span class="section-tag reveal">Overview</span>
-  <div class="about-grid">
-    <div class="about-text reveal">
-      <h2 class="section-title">What is this research about?</h2>
-      <p>
-        The rapid spread of fake news on social media platforms undermines public trust and
-        decision.
-        <strong>Traditional ML models achieve low accuracy</strong> due to limited contextual analysis.
-      </p>
-      <p>
-        This study proposes a <strong>Hybrid BiGRU-Transformer model</strong> that processes
-        news text, image-extracted text (via EasyOCR), and social media reactions
-        (likes, shares, sentiment ratios) for fake news classification.
-      </p>
-      <p>
-        The model fuses these modalities — TF-IDF vectorization for text, VADER sentiment
-        analysis, and numerical reaction features — into a powerful detection system that
-        <strong>surpasses traditional models</strong> by leveraging deep contextual understanding.
-      </p>
+<!-- RESEARCH HIGHLIGHTS -->
+<section id="research">
+  <span class="section-tag reveal">Research</span>
+  <h2 class="section-title reveal">Research Highlights</h2>
+  <p class="section-sub reveal">Key innovations that distinguish this study from prior work in fake news detection.</p>
+  <div class="highlights-grid">
+    <div class="highlight-card reveal">
+      <div class="h-icon">🔗</div>
+      <h4>Multimodal Integration</h4>
+      <p>Unlike text-only models, this study integrates news text, image OCR output, and social reactions into a single unified detection pipeline.</p>
     </div>
-    <div class="about-cards reveal">
-      <div class="about-card">
-        <div class="card-icon">📰</div>
-        <h4>News Text</h4>
-        <p>TF-IDF vectorization on combined news article title and body text.</p>
-      </div>
-      <div class="about-card">
-        <div class="card-icon">🖼️</div>
-        <h4>Image OCR</h4>
-        <p>EasyOCR extracts headline text from social media post images.</p>
-      </div>
-      <div class="about-card">
-        <div class="card-icon">📊</div>
-        <h4>Social Reactions</h4>
-        <p>Likes, shares, positive/negative sentiment ratios as behavioral signals.</p>
-      </div>
-      <div class="about-card">
-        <div class="card-icon">🧠</div>
-        <h4>VADER Sentiment</h4>
-        <p>Compound sentiment score adds emotional context to predictions.</p>
-      </div>
+    <div class="highlight-card reveal">
+      <div class="h-icon">🧠</div>
+      <h4>Hybrid Architecture</h4>
+      <p>BiGRU captures bidirectional sequential context while the Transformer attention mechanism models long-range dependencies across integrated features.</p>
     </div>
+    <div class="highlight-card reveal">
+      <div class="h-icon">💬</div>
+      <h4>Social Engagement Signals</h4>
+      <p>Reaction features like likes, shares, and VADER-scored sentiment ratios provide behavioral signals that text alone cannot capture.</p>
+    </div>
+    <div class="highlight-card reveal">
+      <div class="h-icon">📸</div>
+      <h4>Image Text via OCR</h4>
+      <p>EasyOCR extracts textual content directly from news images, bridging the gap between visual and textual modalities in social media posts.</p>
+    </div>
+    
   </div>
 </section>
 
@@ -904,65 +556,27 @@ footer {
   <span class="section-tag reveal">Methodology</span>
   <h2 class="section-title reveal">How the Model Works</h2>
   <p class="section-sub reveal">Three-phase experimental design: data collection, model development, and system evaluation.</p>
-
   <div class="method-full reveal">
-    <h4 style="font-family:var(--display);font-weight:700;margin-bottom:8px;color:var(--accent)">Model Architecture</h4>
-    <p style="font-size:14px;color:var(--muted);margin-bottom:4px;">BiGRU captures bidirectional sequential context from combined text. Transformer attention handles long-range dependencies. Numeric MLP processes social reaction features. All fused before final classification.</p>
+    <h4 style="font-weight:700;margin-bottom:8px;color:var(--accent)">Model Architecture — Three Feature Fusion</h4>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:4px;">The three features are processed separately and fused before the final classification layer. BiGRU handles text sequences, Transformer adds attention, and an MLP processes numerical reaction signals.</p>
     <div class="arch-flow">
-      <div class="arch-node">
-        <div class="node-icon">📰</div>
-        <h5>TF-IDF</h5>
-        <p>News + Image text combined</p>
-      </div>
+      <div class="arch-node"><div class="node-icon">📰</div><h5>TF-IDF</h5><p>News + Image text</p></div>
       <div class="arch-arrow"></div>
-      <div class="arch-node">
-        <div class="node-icon">🔄</div>
-        <h5>BiGRU</h5>
-        <p>Bidirectional sequential context</p>
-      </div>
+      <div class="arch-node"><div class="node-icon">🔄</div><h5>BiGRU</h5><p>Bidirectional context</p></div>
       <div class="arch-arrow"></div>
-      <div class="arch-node">
-        <div class="node-icon">⚡</div>
-        <h5>Transformer</h5>
-        <p>Long-range attention</p>
-      </div>
+      <div class="arch-node"><div class="node-icon">⚡</div><h5>Transformer</h5><p>Long-range attention</p></div>
       <div class="arch-arrow"></div>
-      <div class="arch-node">
-        <div class="node-icon">📊</div>
-        <h5>Reactions MLP</h5>
-        <p>Likes, shares, VADER</p>
-      </div>
+      <div class="arch-node"><div class="node-icon">📊</div><h5>Reactions MLP</h5><p>Likes, shares, VADER</p></div>
       <div class="arch-arrow"></div>
-      <div class="arch-node">
-        <div class="node-icon">🔗</div>
-        <h5>Fusion</h5>
-        <p>Concat + projection</p>
-      </div>
+      <div class="arch-node"><div class="node-icon">🔗</div><h5>Fusion</h5><p>Feature concat</p></div>
       <div class="arch-arrow"></div>
-      <div class="arch-node" style="border-color:var(--accent)">
-        <div class="node-icon">🎯</div>
-        <h5>Output</h5>
-        <p>Fake / Real prediction</p>
-      </div>
+      <div class="arch-node" style="border-color:var(--accent)"><div class="node-icon">🎯</div><h5>Output</h5><p>Fake / Real</p></div>
     </div>
   </div>
-
   <div class="method-steps">
-    <div class="step-card reveal">
-      <div class="step-num">01</div>
-      <h4>Data Collection</h4>
-      <p>Collected from WELFake, FakeNewsNet (BuzzFeed + PolitiFact), and custom social media reactions dataset. 44,000+ rows combined.</p>
-    </div>
-    <div class="step-card reveal">
-      <div class="step-num">02</div>
-      <h4>Preprocessing</h4>
-      <p>TF-IDF vectorization (512 features), VADER sentiment scoring, log-scaling of reaction counts, and label encoding.</p>
-    </div>
-    <div class="step-card reveal">
-      <div class="step-num">03</div>
-      <h4>Model Training</h4>
-      <p>Stratified K-Fold (k=5) cross-validation. Adam optimizer, class-weighted loss function to handle class imbalance.</p>
-    </div>
+    <div class="step-card reveal"><div class="step-num">01</div><h4>Data Collection</h4><p>WELFake (44K+ news articles), FakeNewsNet (BuzzFeed + PolitiFact), and custom-collected social media reactions from Facebook & Instagram.</p></div>
+    <div class="step-card reveal"><div class="step-num">02</div><h4>Preprocessing</h4><p>TF-IDF vectorization (512 features), VADER sentiment scoring, EasyOCR image text extraction, log-scaling of reaction counts, and label encoding.</p></div>
+    <div class="step-card reveal"><div class="step-num">03</div><h4>Model Training</h4><p>Stratified K-Fold (k=5) cross-validation. Adam optimizer with class-weighted loss to handle class imbalance across the fused feature set.</p></div>
   </div>
 </section>
 
@@ -972,52 +586,22 @@ footer {
 <section id="results">
   <span class="section-tag reveal">Results</span>
   <h2 class="section-title reveal">Performance Metrics</h2>
-  <p class="section-sub reveal">Evaluated using Stratified K-Fold cross-validation with accuracy, precision, recall, F1, and AUC.</p>
-
+  <p class="section-sub reveal">Evaluated using Stratified K-Fold cross-validation across accuracy, F1, AUC, and stability metrics.</p>
   <div class="results-grid">
-    <div class="metric-card reveal">
-      <div class="m-icon">🎯</div>
-      <div class="m-val">97.3%</div>
-      <div class="m-label">Accuracy</div>
-    </div>
-    <div class="metric-card reveal">
-      <div class="m-icon">📐</div>
-      <div class="m-val">97.1%</div>
-      <div class="m-label">F1 Score</div>
-    </div>
-    <div class="metric-card reveal">
-      <div class="m-icon">📈</div>
-      <div class="m-val">0.989</div>
-      <div class="m-label">AUC Score</div>
-    </div>
-    <div class="metric-card reveal">
-      <div class="m-icon">🔁</div>
-      <div class="m-val">±0.48%</div>
-      <div class="m-label">K-Fold Std Dev</div>
-    </div>
+    <div class="metric-card reveal"><div class="m-icon">🎯</div><div class="m-val">97.3%</div><div class="m-label">Accuracy</div></div>
+    <div class="metric-card reveal"><div class="m-icon">📐</div><div class="m-val">97.1%</div><div class="m-label">F1 Score</div></div>
+    <div class="metric-card reveal"><div class="m-icon">📈</div><div class="m-val">0.989</div><div class="m-label">AUC Score</div></div>
+    <div class="metric-card reveal"><div class="m-icon">🔁</div><div class="m-val">±0.48%</div><div class="m-label">K-Fold Std Dev</div></div>
   </div>
-
   <table class="comparison-table reveal">
-    <thead>
-      <tr>
-        <th>Model</th>
-        <th>Accuracy</th>
-        <th>F1 Score</th>
-        <th>Modalities</th>
-      </tr>
-    </thead>
+    <thead><tr><th>Model</th><th>Accuracy</th><th>F1 Score</th><th>Modalities</th></tr></thead>
     <tbody>
       <tr><td>SVM (Baseline)</td><td>82.4%</td><td>81.9%</td><td>Text only</td></tr>
       <tr><td>Random Forest</td><td>85.1%</td><td>84.6%</td><td>Text only</td></tr>
       <tr><td>LSTM</td><td>91.3%</td><td>90.8%</td><td>Text only</td></tr>
       <tr><td>BERT (Text only)</td><td>96.8%</td><td>96.5%</td><td>Text only</td></tr>
       <tr><td>CNN + BiLSTM</td><td>94.2%</td><td>93.7%</td><td>Text only</td></tr>
-      <tr class="highlight">
-        <td>Our Model (Tri-Modal) <span class="badge-best">✦ Best</span></td>
-        <td>97.3%</td>
-        <td>97.1%</td>
-        <td>Text + Image + Reactions</td>
-      </tr>
+      <tr class="highlight"><td>Our Model (Tri-Modal) <span class="badge-best">✦ Best</span></td><td>97.3%</td><td>97.1%</td><td>Text + Image + Reactions</td></tr>
     </tbody>
   </table>
 </section>
@@ -1028,26 +612,25 @@ footer {
 <section id="dataset">
   <span class="section-tag reveal">Data</span>
   <h2 class="section-title reveal">Datasets Used</h2>
-  <p class="section-sub reveal">Three data sources combined for comprehensive multimodal training.</p>
-
+  <p class="section-sub reveal">Three data sources representing each of the integrated features.</p>
   <div class="dataset-grid">
     <div class="dataset-card reveal">
       <div class="ds-icon">📚</div>
       <h4>WELFake Dataset</h4>
       <div class="ds-count">44,000+</div>
-      <p>News article text (title + body). Real and fake news from multiple sources. Primary text modality dataset.</p>
+      <p>News article text (title + body). Real and fake news from multiple sources. Available on Kaggle. Covers Feature 1 — text modality.</p>
     </div>
     <div class="dataset-card reveal">
       <div class="ds-icon">🗞️</div>
       <h4>FakeNewsNet</h4>
       <div class="ds-count">422</div>
-      <p>BuzzFeed + PolitiFact news. Headline text used as image-extracted text proxy. Image modality dataset.</p>
+      <p>BuzzFeed + PolitiFact news. Available on Kaggle. Headline text used as image-extracted text proxy. Covers Feature 2 — image OCR modality.</p>
     </div>
     <div class="dataset-card reveal">
       <div class="ds-icon">💬</div>
-      <h4>Social Reactions</h4>
-      <div class="ds-count">1000</div>
-      <p>Custom-collected directly from Facebook & Instagram. Contains real social media posts with likes, shares, and positive/negative sentiment ratios.</p>
+      <h4>Facebook & Instagram</h4>
+      <div class="ds-count">1,000</div>
+      <p>📍 <strong style="color:var(--accent)">Custom-collected</strong> directly from Facebook & Instagram — includes likes, shares, and positive/negative reaction ratios. Covers Feature 3 — social reactions modality.</p>
     </div>
   </div>
 </section>
@@ -1058,24 +641,32 @@ footer {
 <section id="howto">
   <span class="section-tag reveal">Usage</span>
   <h2 class="section-title reveal">How to Use the Tool</h2>
-  <p class="section-sub reveal">Provide any one or combination of inputs — the tool works with all three modalities.</p>
-
+  <p class="section-sub reveal">Provide any one or combination of the three feature inputs — the system works with partial inputs too.</p>
   <div class="howto-steps">
-    <div class="howto-card reveal" data-step="1">
-      <div class="step-icon">📰</div>
-      <h4>Step 1 — Input News Text</h4>
-      <p>Paste the news article text or social media post content into the text field. This is optional but improves accuracy.</p>
-    </div>
-    <div class="howto-card reveal" data-step="2">
-      <div class="step-icon">🖼️</div>
-      <h4>Step 2 — Upload Image</h4>
-      <p>Upload a screenshot of the news post or social media image. EasyOCR automatically extracts the text from it.</p>
-    </div>
-    <div class="howto-card reveal" data-step="3">
-      <div class="step-icon">📊</div>
-      <h4>Step 3 — Add Reactions</h4>
-      <p>Enter likes count, shares, and positive/negative reaction ratios if available. Then click Run Detection.</p>
-    </div>
+    <div class="howto-card reveal" data-step="1"><div class="step-icon">📰</div><h4>Step 1 — Input News Text</h4><p>Paste the news article title or body text into the text field. Processed via TF-IDF vectorization for classification.</p></div>
+    <div class="howto-card reveal" data-step="2"><div class="step-icon">🖼️</div><h4>Step 2 — Upload Image</h4><p>Upload a screenshot of the social media post. EasyOCR automatically extracts any embedded text from the image.</p></div>
+    <div class="howto-card reveal" data-step="3"><div class="step-icon">📊</div><h4>Step 3 — Add Reactions</h4><p>Enter likes count, shares, and positive/negative reaction ratios. Click Submit button to get the classification result.</p></div>
+  </div>
+</section>
+
+<div class="divider"></div>
+
+<!-- TECH STACK -->
+<section id="tech">
+  <span class="section-tag reveal">Technology</span>
+  <h2 class="section-title reveal">Tech Stack</h2>
+  <p class="section-sub reveal">Tools and frameworks used to build and deploy this research system.</p>
+  <div class="tech-grid">
+    <div class="tech-card reveal"><div class="tech-icon">🐍</div><h5>Python</h5><span>Language</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">🔥</div><h5>PyTorch</h5><span>DL Framework</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">🤗</div><h5>Gradio</h5><span>UI Interface</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">👁️</div><h5>EasyOCR</h5><span>Image OCR</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">📊</div><h5>VADER</h5><span>Sentiment Analysis</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">📐</div><h5>Scikit-learn</h5><span>TF-IDF / Metrics</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">🐼</div><h5>Pandas</h5><span>Data Processing</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">🔢</div><h5>NumPy</h5><span>Numerical Ops</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">🤖</div><h5>HuggingFace</h5><span>Deployment</span></div>
+    <div class="tech-card reveal"><div class="tech-icon">🌐</div><h5>GitHub Pages</h5><span>Web Hosting</span></div>
   </div>
 </section>
 
@@ -1085,34 +676,35 @@ footer {
 <section id="team">
   <span class="section-tag reveal">People</span>
   <h2 class="section-title reveal">Research Team</h2>
-  <p class="section-sub reveal">Faculty of Technology, University of Sri Jayewardenepura — ICT Department, Multimedia Technology.</p>
-
+  <p class="section-sub reveal">Department of ICT, Faculty of Technology, University of Sri Jayewardenepura </p>
   <div class="team-grid">
     <div class="team-card reveal">
       <div class="team-avatar">B</div>
       <h4>Bandara D.M.K.S</h4>
       <div class="team-id">ICT/21/812</div>
       <div class="team-role">Multimedia Technology</div>
+      <a href="mailto:ict21812@fot.sjp.ac.lk" class="team-email">ict21812@fot.sjp.ac.lk</a>
     </div>
     <div class="team-card reveal">
       <div class="team-avatar">H</div>
       <h4>Hafsa N.F</h4>
       <div class="team-id">ICT/21/846</div>
       <div class="team-role">Multimedia Technology</div>
+      <a href="mailto:ict21846@fot.sjp.ac.lk" class="team-email">ict21846@fot.sjp.ac.lk</a>
     </div>
     <div class="team-card reveal">
       <div class="team-avatar">N</div>
       <h4>Nafla A.N.F</h4>
       <div class="team-id">ICT/21/889</div>
       <div class="team-role">Multimedia Technology</div>
+      <a href="mailto:ict21889@fot.sjp.ac.lk" class="team-email">ict21889@fot.sjp.ac.lk</a>
     </div>
   </div>
-
   <div class="supervisors">
     <div class="supervisor-card reveal">
       <div class="sup-avatar">👨‍🏫</div>
       <div class="sup-info">
-        <h5>Mr. Chamila Karunatilake</h5>
+        <h5>Mr. Chamila Karunatilaka</h5>
         <div class="sup-role">Main Supervisor</div>
         <div class="sup-email">chamilakarunatilake@gmail.com</div>
       </div>
@@ -1133,11 +725,9 @@ footer {
 <!-- DEMO CTA -->
 <section style="padding:60px 48px;">
   <div class="demo-section reveal">
-    <h2>Ready to Detect Fake News?</h2>
-    <p>Try our live demo — no installation needed. Works from any device, any browser.</p>
-    <a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank" class="btn-primary" style="font-size:15px;padding:16px 40px;">
-      🚀 Open Live Demo
-    </a>
+    <h2>Explore the Live Demo</h2>
+    <p>Try our Fake News Detector — no installation needed. Works from any device, any browser.</p>
+    <a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank" class="btn-primary" style="font-size:15px;padding:15px 38px;">🚀 Open Live Demo</a>
   </div>
 </section>
 
@@ -1146,27 +736,26 @@ footer {
   <div class="footer-inner">
     <div class="footer-brand">
       <h3>🧠 FakeNewsDetector</h3>
-      <p style="font-size:13px;color:var(--muted);margin-top:8px;line-height:1.6;">
-        Hybrid BiGRU-Transformer model for fake news detection using multimodal data and social media reactions.
-      </p>
-      <div class="usjp-badge" style="margin-top:16px;">
-        🎓 University of Sri Jayewardenepura
-      </div>
+      <p>Hybrid BiGRU-Transformer model integrating three features — news text, image OCR, and social media reactions — for fake news detection research.</p>
+      <div class="usjp-badge">🎓 University of Sri Jayewardenepura</div>
     </div>
     <div class="footer-col">
       <h5>Navigation</h5>
       <a href="#about">About</a>
+      <a href="#research">Research</a>
       <a href="#methodology">Methodology</a>
       <a href="#results">Results</a>
       <a href="#dataset">Dataset</a>
+      <a href="#howto">How to Use</a>
+      <a href="#tech">Tech Stack</a>
       <a href="#team">Team</a>
     </div>
     <div class="footer-col">
       <h5>Resources</h5>
-      <a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank">Live Demo</a>
-      <a href="#">Research Proposal</a>
-      <a href="#">Source Code</a>
-      <a href="#team">Contact Team</a>
+      <a href="https://huggingface.co/spaces/HafsaNawas200/FakeNewsDetector-G27" target="_blank">🚀 Live Demo</a>
+      <a href="https://hafsa-nawas.github.io/FakeNewsDetector_G27/" target="_blank">🌐 Website</a>
+      <a href="https://github.com/Hafsa-Nawas/FakeNewsDetector_G27" target="_blank">💻 Source Code</a>
+      <a href="#team">📧 Contact Team</a>
     </div>
   </div>
   <div class="footer-bottom">
@@ -1176,30 +765,45 @@ footer {
 </footer>
 
 <script>
-// Scroll reveal
-const reveals = document.querySelectorAll('.reveal');
+// ── Hamburger ──
+const hamburger = document.getElementById('hamburger');
+const mobileMenu = document.getElementById('mobileMenu');
+const mainNav    = document.getElementById('mainNav');
+
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('open');
+  mobileMenu.classList.toggle('open');
+});
+function closeMobile() {
+  hamburger.classList.remove('open');
+  mobileMenu.classList.remove('open');
+}
+document.addEventListener('click', (e) => {
+  if (!mainNav.contains(e.target) && !mobileMenu.contains(e.target)) closeMobile();
+});
+
+// ── Scroll Reveal ──
+const reveals  = document.querySelectorAll('.reveal');
 const observer = new IntersectionObserver(entries => {
-  entries.forEach((entry, i) => {
-    if(entry.isIntersecting) {
-      setTimeout(() => {
-        entry.target.classList.add('visible');
-      }, 80);
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
       observer.unobserve(entry.target);
     }
   });
-}, { threshold: 0.1 });
+}, { threshold: 0.08 });
 reveals.forEach(el => observer.observe(el));
 
-// Smooth active nav
+// ── Active Nav Highlight ──
 const sections = document.querySelectorAll('section[id]');
 const navLinks = document.querySelectorAll('.nav-links a');
 window.addEventListener('scroll', () => {
   let current = '';
   sections.forEach(s => {
-    if(window.scrollY >= s.offsetTop - 100) current = s.id;
+    if (window.scrollY >= s.offsetTop - 130) current = s.id;
   });
   navLinks.forEach(a => {
-    a.style.color = a.getAttribute('href') === `#${current}` ? 'var(--accent)' : '';
+    a.style.color = a.getAttribute('href') === '#' + current ? 'var(--accent)' : '';
   });
 });
 </script>
